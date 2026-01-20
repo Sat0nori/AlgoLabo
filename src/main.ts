@@ -1,9 +1,18 @@
 import extractJson from "./extractJson"
-import { LaboData } from "./interfaceJson"
+import { LaboData, Schedule } from "./interfaceJson"
+import metricsCalcul from "./metricsCalcul"
+import scheduleModule from "./scheduleModule"
 
 async function main() {
 	const data: LaboData = await extractJson()
-	console.log(data)
+
+	const schedule: Schedule[] = scheduleModule(data)
+
+	const metrics = metricsCalcul(schedule, data)
+
+	const result = { schedule: schedule, metrics: metrics }
+
+	console.log(result)
 }
 
 main()
