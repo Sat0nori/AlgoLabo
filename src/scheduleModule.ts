@@ -4,38 +4,39 @@ import { minutesToTime, timeToMinutes } from "./timeFunction"
 export default function scheduleModule(data: LaboData) {
 	const { samples, technicians, equipment } = data
 	const schedule: Schedule[] = []
+	const priorityOrder = ["STAT", "URGENT", "ROUTINE"]
 
-	const sampleStat = samples.find((element) => {
-		return element.priority === "URGENT"
+	//tri des samples par priorité
+	const orderedSample = [...data.samples].sort((a, b) => {
+		const order = priorityOrder.indexOf(a.priority) - priorityOrder.indexOf(b.priority)
+		if (order !== 0) return order
+		//si meme priorité on tri par heure d'arrivée
+		return timeToMinutes(a.arrivalTime) - timeToMinutes(b.arrivalTime)
 	})
 
-	const techSpe = technicians.find((element) => {
-		return element.speciality === sampleStat?.type
-	})
+	//on dit que le tech et l'equipêment sont dispo
+	let techFree = timeToMinutes(technicians[0].startTime)
+	let equipFree = 0
 
-	const equipType = equipment.find((element) => {
-		return element.type === sampleStat?.type && element.available === true
-	})
+	//on regarde les samples a la main
+	orderedSample.forEach((element) => {
+		//on regarde si tt est ok et dispo (sample, tech et equip)
+		const start = Math.max(timeToMinutes(element.arrivalTime), techFree, equipFree)
+		const end = start + element.analysisTime
 
-	if (!sampleStat || !techSpe || !equipType) {
-		return schedule
-	}
+		//on ajoute au planning
+		schedule.push({
+			sampleId: element.id,
+			technicianId: technicians[0].id,
+			equipmentId: equipment[0].id,
+			startTime: minutesToTime(start),
+			endTime: minutesToTime(end),
+			priority: element.priority,
+		})
 
-	const sampleArrival = timeToMinutes(sampleStat.arrivalTime)
-	const techStart = timeToMinutes(techSpe.startTime)
-	const techEnd = timeToMinutes(techSpe.endTime)
-	const startMinutes = Math.max(sampleArrival, techStart)
-	const endMinutes = startMinutes + sampleStat.analysisTime
-
-	if (endMinutes > techEnd) return schedule
-
-	schedule.push({
-		sampleId: sampleStat.id,
-		technicianId: techSpe.id,
-		equipmentId: equipType.id,
-		startTime: minutesToTime(startMinutes),
-		endTime: minutesToTime(endMinutes),
-		priority: sampleStat.priority,
+		//on dit que le tech et equip sont occuper jusqu'a end
+		techFree = end
+		equipFree = end
 	})
 	return schedule
 }
