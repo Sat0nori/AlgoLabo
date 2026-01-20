@@ -1,0 +1,14 @@
+{
+	"name": "algolabo",
+	"version": "1.0.0",
+	"description": "",
+	"main": "src/main.js",
+	"scripts": {
+		"main": "ts-node src/main.ts"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.9",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.9.3"
+	}
+}
